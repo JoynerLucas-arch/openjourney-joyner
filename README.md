@@ -1,202 +1,171 @@
-# Openjourney - MidJourney UI clone
+# Openjourney - MidJourney UI Clone (即梦 AI 版)
 
-A high-fidelity, open-source clone of the MidJourney web interface built with Next.js 15, featuring real AI image and video generation powered by Google's Gemini SDK. Use Imagen 4 to generate images and Veo 2 and 3 for image and text to video with audio.
-
-OR extend and bring your favorite models to the same experience.
+这是一个基于 Next.js 15 构建的高保真 MidJourney Web 界面克隆版，集成了火山引擎（Volcengine）的即梦（Jimeng）AI SDK，支持高质量的图像和视频生成。
 
 ![openjourney-ui](https://github.com/user-attachments/assets/392da5a8-d121-4f71-83f7-dfca20a267af)
 
-## ✨ Features
+## ✨ 功能特性
 
-### 🎨 **AI Image Generation**
-- **Imagen 4** integration for high-quality image generation
-- **4-image grid layout** matching MidJourney's design
-- **Real-time generation** with loading animations
+### 🎨 **AI 图像生成**
+- 集成 **即梦 (Jimeng) AI** (`jimeng_t2i_v31`) 模型，提供高质量图像生成
+- **4图网格布局**，完美复刻 MidJourney 的设计体验
+- **实时生成**，带有加载动画反馈
 
-### 🎬 **AI Video Generation**
-- **Veo 3** text-to-video generation
-- **Veo 2** image-to-video conversion
-- **2x2 video grid** with autoplay on hover
+### 🎬 **AI 视频生成**
+- **文生视频**：支持 `jimeng_ti2v_v30_pro` / `jimeng_t2v_v30_1080p` 模型
+- **图生视频**：支持将生成的图像转化为动态视频
+- **视频网格**：支持 2x2 视频展示，悬停自动播放
 
-### 🚀 **Interactive features**
-- **Download** generated images and videos
-- **Image-to-video conversion** with one click
-- **Hover animations** and professional transitions
-- **Real-time loading states** with skeleton animations
-- **Film strip navigation** to easily flip through your gneerations
+### 🚀 **交互体验**
+- **下载**：一键下载生成的图片和视频
+- **图生视频转换**：一键将静态图片转化为视频
+- **悬停动画**：流畅的过渡效果和专业的 UI 交互
+- **实时加载状态**：带有骨架屏（Skeleton）加载动画
+- **画廊浏览**：支持全屏查看、翻阅生成的作品
 
-## 🛠️ Tech Stack
+## 🛠️ 技术栈
 
-- **Next.js 15** with App Router and Turbopack
-- **TypeScript** for type safety
-- **Tailwind CSS v4** for styling
-- **Framer Motion** for animations
-- **ShadCN UI** components
-- **Google GenAI SDK** for AI generation
-- **Radix UI** for accessible components
+- **Next.js 15** (App Router & Turbopack)
+- **TypeScript** (类型安全)
+- **Tailwind CSS v4** (样式)
+- **Framer Motion** (动画)
+- **ShadCN UI** (UI 组件库)
+- **Volcengine (即梦) API** (AI 生成服务)
+- **MySQL** (数据存储)
+- **Radix UI** (无障碍组件)
 
-## 📋 Prerequisites
+## 📋 前置要求
 
-- **Node.js 18+** (20+ recommended)
-- **npm** or **yarn**
-- **Google AI API Key** (free tier available)
+- **Node.js 18+** (推荐 20+)
+- **npm** 或 **yarn**
+- **MySQL 数据库**
+- **火山引擎 (Volcengine) 账号** (用于获取 Access Key 和 Secret Key)
 
-## 🚀 Quick Start
+## 🚀 快速开始
 
-### 1. Clone & Install
+### 1. 克隆项目并安装依赖
 
 ```bash
 git clone https://github.com/your-username/openjourney.git
-cd openjourney/openjourney-app
+cd openjourney
 npm install
 ```
 
-### 2. Environment Setup
+### 2. 数据库设置
 
-Create `.env.local`:
+本项目使用 MySQL 存储数据。请确保你已安装并运行 MySQL 服务。
+
+1. 创建数据库 `openjourney`（或其他你喜欢的名字）。
+2. 运行 `database/init.sql` 脚本初始化表结构。
+
+### 3. 环境配置
+
+在项目根目录创建 `.env.local` 文件，并填入以下配置：
 
 ```env
-GOOGLE_AI_API_KEY=your_google_ai_api_key_here
+# 数据库配置
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=your_password
+DB_NAME=openjourney
+
+# 火山引擎 (即梦 AI) 配置
+# 用于图像生成
+JIMENG_IMAGE_ACCESS_KEY=your_access_key
+JIMENG_IMAGE_SECRET_KEY=your_secret_key
+
+# 用于视频生成
+JIMENG_VIDEO_ACCESS_KEY=your_access_key
+JIMENG_VIDEO_SECRET_KEY=your_secret_key
 ```
 
-**Get your API key:**
-1. Visit [Google AI Studio](https://aistudio.google.com/app/apikey)
-2. Create a new project or select existing
-3. Generate an API key
-4. Copy and paste into `.env.local`
+**获取 API 密钥：**
+1. 访问 [火山引擎控制台](https://console.volcengine.com/)
+2. 申请并开通即梦 AI 相关服务（CV）
+3. 获取 Access Key 和 Secret Key
 
-### 3. Development Server
+### 4. 启动开发服务器
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to view the app.
+打开浏览器访问 [http://localhost:3000](http://localhost:3000) 即可查看应用。
 
-## 🎯 Usage Guide
+## 🎯 使用指南
 
-### **Generating Images**
-1. Type your prompt in the input bar
-2. Click **"Image"** button or press Enter
-3. Watch 4 high-quality images generate in real-time
-4. Hover to **Download**, **Expand**, or **Animate with Veo 2**
+### **生成图像**
+1. 在输入框中输入提示词（Prompt）
+2. 点击 **"Image"** 按钮或按回车键
+3. 等待 AI 生成 4 张高质量图片
+4. 悬停在图片上可选择 **下载**、**放大预览** 或 **生成视频**
 
-### **Generating Videos**
-1. Type your video prompt
-2. Click **"Video"** button
-3. Watch videos generate (takes 30-60 seconds)
-4. Hover over video row to autoplay both videos
+### **生成视频**
+1. 输入视频提示词
+2. 点击 **"Video"** 按钮
+3. 等待视频生成（通常需要几十秒）
+4. 悬停在视频上可预览播放
 
-### **Image-to-Video Conversion**
-1. Generate or use sample images
-2. Hover over any image
-3. Click **"Animate with Veo 2"**
-4. Watch as image becomes animated video
+### **图生视频**
+1. 生成或选择一张已有的图片
+2. 悬停在图片上
+3. 点击 **"Animate"** (生成视频) 按钮
+4. 观看图片转化为动态视频
 
-### **Viewing & Downloading**
-1. **Expand** - Click to view in fullscreen lightbox
-2. **Download** - Save images/videos locally
-3. **Navigation** - Use arrow keys or or scroll in full screen mode
-
-## 🏗️ Project Structure
+## 🏗️ 项目结构
 
 ```
-openjourney-app/
+openjourney/
 ├── src/
 │   ├── app/
-│   │   ├── api/                 # API routes for AI generation
-│   │   │   ├── generate-images/ # Imagen 4 integration
-│   │   │   ├── generate-videos/ # Veo 3 text-to-video
-│   │   │   └── image-to-video/  # Veo 2 image-to-video
-│   │   ├── globals.css          # Global styles
-│   │   ├── layout.tsx           # Root layout
-│   │   └── page.tsx             # Main page component
-│   ├── components/
-│   │   ├── ui/                  # ShadCN UI components
-│   │   ├── prompt-bar.tsx       # Prompt input with logo
-│   │   ├── content-grid.tsx     # Generation management
-│   │   ├── image-grid.tsx       # 4-image display grid
-│   │   ├── video-grid.tsx       # 2x2 video display
-│   │   ├── loading-grid.tsx     # Skeleton loading states
-│   │   └── lightbox-modal.tsx   # Fullscreen viewer
+│   │   ├── api/                 # API 路由
+│   │   │   ├── generate-images/ # 图片生成 (Jimeng T2I)
+│   │   │   ├── generate-videos/ # 视频生成 (Jimeng T2V)
+│   │   │   └── image-to-video/  # 图生视频 (Jimeng I2V)
+│   │   ├── globals.css          # 全局样式
+│   │   ├── layout.tsx           # 根布局
+│   │   └── page.tsx             # 主页面
+│   ├── components/              # React 组件
 │   └── lib/
-│       └── utils.ts             # Utility functions
+│       ├── database.ts          # 数据库连接工具
+│       └── utils.ts             # 通用工具函数
 ├── public/
-│   ├── openjourney-logo.svg     # Brand logo
-│   ├── sample-images/           # Demo images
-│   └── sample-videos/           # Demo videos
-├── next.config.js               # Next.js configuration
-├── tailwind.config.ts           # Tailwind configuration
-└── package.json                 # Dependencies
+│   ├── generated-images/        # 生成的图片保存位置
+│   ├── generated-videos/        # 生成的视频保存位置
+│   └── sample-images/           # 示例资源
+├── database/
+│   └── init.sql                 # 数据库初始化脚本
+├── next.config.js               # Next.js 配置
+└── package.json                 # 项目依赖
 ```
 
-## 🎨 AI Models Used
+## 🎨 AI 模型说明
 
-### **Imagen 4** (Image Generation)
-- **Model**: `imagen-3.0-generate-001`
-- **Output**: 4 high-quality 1024x1024 images
-- **Format**: Base64 encoded PNG
+### **即梦 (Jimeng) T2I** (图像生成)
+- **模型版本**: `jimeng_t2i_v31`
+- **输出**: 高质量图片
+- **能力**: 优秀的中文理解能力，高保真图像生成
 
-### **Veo 3** (Text-to-Video)
-- **Model**: `veo-3`
-- **Output**: High quality video generation with audio
-- **Duration**: ~3-5 seconds, 720p
+### **即梦 (Jimeng) T2V/I2V** (视频生成)
+- **模型版本**: `jimeng_ti2v_v30_pro`, `jimeng_t2v_v30_1080p`
+- **输出**: 高清视频片段
+- **能力**: 支持文生视频和图生视频，动作流畅
 
-### **Veo 2** (Image-to-Video)
-- **Model**: `veo-2.0-generate-001` with image input
-- **Input**: Base64 image + text prompt
-- **Output**: Animated video from static image
+## 🤝 贡献
 
-## 🔧 Configuration
+1. Fork 本仓库
+2. 创建特性分支: `git checkout -b feature/amazing-feature`
+3. 提交更改: `git commit -m 'Add amazing feature'`
+4. 推送到分支: `git push origin feature/amazing-feature`
+5. 提交 Pull Request
 
-### **Image Domains** (next.config.js)
-```javascript
-images: {
-  remotePatterns: [
-    {
-      protocol: 'https',
-      hostname: 'picsum.photos', // For placeholder images
-    },
-  ],
-}
-```
+## 📝 许可证
 
-## 🚀 Deployment
+本项目采用 MIT 许可证 - 详见 [LICENSE](LICENSE) 文件。
 
-### **Vercel** (Recommended)
-```bash
-npm run build
-npx vercel --prod
-```
+## 🙏 致谢
 
-### **Docker**
-```bash
-docker build -t openjourney .
-docker run -p 3000:3000 openjourney
-```
-
-### **Environment Variables**
-Make sure to set `GOOGLE_AI_API_KEY` in your deployment platform or you can enter your key in the app.
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push to branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- **MidJourney** for the original interface inspiration
-- **Google Gemini API** for the powerful generation models
-- **Vercel** for Next.js and deployment platform
-- **ShadCN** for the beautiful UI components
-
-## Follow for more!
-
-- **For more AI projects**: [@ammaar on X](https://x.com/ammaar)
+- **MidJourney** - 原创界面灵感
+- **火山引擎 (Volcengine)** - 强大的即梦 AI 生成模型
+- **ShadCN UI** - 精美的 UI 组件库
