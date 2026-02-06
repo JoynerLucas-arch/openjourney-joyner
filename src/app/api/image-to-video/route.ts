@@ -1,16 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
-
-// Helper function to create signing key
-function getSignatureKey(key: string, dateStamp: string, regionName: string, serviceName: string) {
-  const kDate = crypto.createHmac('sha256', key).update(dateStamp).digest();
-  const kRegion = crypto.createHmac('sha256', kDate).update(regionName).digest();
-  const kService = crypto.createHmac('sha256', kRegion).update(serviceName).digest();
-  const kSigning = crypto.createHmac('sha256', kService).update('request').digest();
-  return kSigning;
-}
 
 // Helper function to download and save video
 async function downloadAndSaveVideo(videoUrl: string, prompt: string): Promise<string> {
@@ -61,96 +51,41 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "提示词和图片是必填项" }, { status: 400 });
     }
 
-    // Use user-provided credentials if available, otherwise fallback to environment variables
-    const accessKeyId = accessKey || process.env.JIMENG_VIDEO_ACCESS_KEY;
-    const secretAccessKey = secretKey || process.env.JIMENG_VIDEO_SECRET_KEY;
-    
-    if (!accessKeyId || !secretAccessKey) {
+    const apiKey = accessKey || secretKey || process.env.ALIYUN_VIDEO_API_KEY || process.env.DASHSCOPE_API_KEY;
+
+    if (!apiKey) {
       return NextResponse.json({ 
-        error: "未提供视频生成API凭证。请在设置中配置视频生成的Access Key和Secret Key。" 
+        error: "未提供视频生成API Key。请在设置中配置视频生成的API Key。" 
       }, { status: 401 });
     }
 
     console.log("正在为图片生成视频，提示词：", prompt);
 
-    // Helper function to format query parameters
-    const formatQuery = (parameters: Record<string, string>): string => {
-      let requestParameters = '';
-      for (const key of Object.keys(parameters).sort()) {
-        requestParameters += key + '=' + parameters[key] + '&';
+    const selectedModel = model || "wan2.6-i2v";
+    const requestUrl = 'https://dashscope.aliyuncs.com/api/v1/services/aigc/video-generation/video-synthesis';
+    const imageUrl = imageBytes.startsWith('data:') ? imageBytes : `data:image/png;base64,${imageBytes}`;
+    const requestBody = {
+      model: selectedModel,
+      input: {
+        prompt,
+        img_url: imageUrl
+      },
+      parameters: {
+        resolution: "1080P",
+        prompt_extend: true,
+        duration: 5,
+        shot_type: "single"
       }
-      return requestParameters.slice(0, -1);
     };
 
-    // Prepare request for JiMeng AI Image-to-Video API
-    const method = 'POST';
-    const host = 'visual.volcengineapi.com';
-    const region = 'cn-north-1';
-    const endpoint = 'https://visual.volcengineapi.com';
-    const service = 'cv';
-
-    // Step 1: Submit task
-    const queryParams = {
-      'Action': 'CVSync2AsyncSubmitTask',
-      'Version': '2022-08-31',
-    };
-    const formattedQuery = formatQuery(queryParams);
-
-    // Determine req_key based on model selection
-    const reqKey = model === 'jimeng_ti2v_v30_pro' ? 'jimeng_ti2v_v30_pro' : 'jimeng_i2v_first_v30_1080';
-    
-    console.log('图生视频请求参数:');
-    console.log('- 选择的模型:', model || '未指定(使用默认)');
-    console.log('- 实际使用的req_key:', reqKey);
-    console.log('- 提示词:', prompt);
-    
-    const bodyParams = {
-      "req_key": reqKey,
-      "binary_data_base64": [imageBytes],
-      "prompt": prompt,
-      "seed": -1,
-      "frames": 121  // 121 frames = 5 seconds
-    };
-    const body = JSON.stringify(bodyParams);
-
-    // Signing logic for JiMeng AI
-    const t = new Date();
-    const currentDate = t.toISOString().replace(/-/g, '').replace(/:/g, '').split('.')[0] + 'Z';
-    const datestamp = t.toISOString().slice(0, 10).replace(/-/g, '');
-    const canonicalUri = '/';
-    const canonicalQuerystring = formattedQuery;
-    const signedHeaders = 'content-type;host;x-content-sha256;x-date';
-    const payloadHash = crypto.createHash('sha256').update(body).digest('hex');
-    const contentType = 'application/json';
-    
-    const canonicalHeaders = `content-type:${contentType}\nhost:${host}\nx-content-sha256:${payloadHash}\nx-date:${currentDate}\n`;
-    
-    const canonicalRequest = `${method}\n${canonicalUri}\n${canonicalQuerystring}\n${canonicalHeaders}\n${signedHeaders}\n${payloadHash}`;
-    
-    const algorithm = 'HMAC-SHA256';
-    const credentialScope = `${datestamp}/${region}/${service}/request`;
-    const stringToSign = `${algorithm}\n${currentDate}\n${credentialScope}\n${crypto.createHash('sha256').update(canonicalRequest).digest('hex')}`;
-    
-    const signingKey = getSignatureKey(secretAccessKey, datestamp, region, service);
-    const signature = crypto.createHmac('sha256', signingKey).update(stringToSign).digest('hex');
-    
-    const authorization = `${algorithm} Credential=${accessKeyId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
-
-    const headers = {
-      'X-Date': currentDate,
-      'Authorization': authorization,
-      'X-Content-Sha256': payloadHash,
-      'Content-Type': contentType
-    };
-
-    const requestUrl = `${endpoint}?${canonicalQuerystring}`;
-
-    // Step 1: Submit task
-    console.log('提交图生视频任务到即梦AI...');
     const submitResponse = await fetch(requestUrl, {
       method: 'POST',
-      headers: headers,
-      body: body
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+        'X-DashScope-Async': 'enable'
+      },
+      body: JSON.stringify(requestBody)
     });
 
     if (!submitResponse.ok) {
@@ -161,11 +96,11 @@ export async function POST(request: NextRequest) {
 
     const submitData = await submitResponse.json();
     
-    if (!submitData.data || !submitData.data.task_id) {
+    if (!submitData.output || !submitData.output.task_id) {
       throw new Error('任务提交失败：未返回任务ID');
     }
 
-    const taskId = submitData.data.task_id;
+    const taskId = submitData.output.task_id;
     console.log(`图生视频任务提交成功, 任务ID: ${taskId}`);
 
     // Step 2: Query task result with polling
@@ -179,45 +114,11 @@ export async function POST(request: NextRequest) {
       // Wait 10 seconds between attempts for video generation
       await new Promise(resolve => setTimeout(resolve, 10000));
       
-      // Prepare query request
-      const queryT = new Date();
-      const queryCurrentDate = queryT.toISOString().replace(/-/g, '').replace(/:/g, '').split('.')[0] + 'Z';
-      const queryDatestamp = queryT.toISOString().slice(0, 10).replace(/-/g, '');
-      
-      const queryParams = {
-        'Action': 'CVSync2AsyncGetResult',
-        'Version': '2022-08-31',
-      };
-      const queryFormattedQuery = formatQuery(queryParams);
-      
-      const queryBodyParams = {
-        "req_key": reqKey,
-        "task_id": taskId,
-      };
-      const queryBody = JSON.stringify(queryBodyParams);
-      
-      const queryPayloadHash = crypto.createHash('sha256').update(queryBody).digest('hex');
-      const queryCanonicalHeaders = `content-type:${contentType}\nhost:${host}\nx-content-sha256:${queryPayloadHash}\nx-date:${queryCurrentDate}\n`;
-      const queryCanonicalRequest = `${method}\n${canonicalUri}\n${queryFormattedQuery}\n${queryCanonicalHeaders}\n${signedHeaders}\n${queryPayloadHash}`;
-      const queryStringToSign = `${algorithm}\n${queryCurrentDate}\n${queryDatestamp}/${region}/${service}/request\n${crypto.createHash('sha256').update(queryCanonicalRequest).digest('hex')}`;
-      
-      const querySigningKey = getSignatureKey(secretAccessKey, queryDatestamp, region, service);
-      const querySignature = crypto.createHmac('sha256', querySigningKey).update(queryStringToSign).digest('hex');
-      const queryAuthorization = `${algorithm} Credential=${accessKeyId}/${queryDatestamp}/${region}/${service}/request, SignedHeaders=${signedHeaders}, Signature=${querySignature}`;
-      
-      const queryHeaders = {
-        'X-Date': queryCurrentDate,
-        'Authorization': queryAuthorization,
-        'X-Content-Sha256': queryPayloadHash,
-        'Content-Type': contentType
-      };
-      
-      const queryRequestUrl = `${endpoint}?${queryFormattedQuery}`;
-      
-      const queryResponse = await fetch(queryRequestUrl, {
-        method: 'POST',
-        headers: queryHeaders,
-        body: queryBody
+      const queryResponse = await fetch(`https://dashscope.aliyuncs.com/api/v1/tasks/${taskId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`
+        }
       });
       
       if (!queryResponse.ok) {
@@ -227,13 +128,13 @@ export async function POST(request: NextRequest) {
       
       const queryData = await queryResponse.json();
       
-      if (queryData.data) {
-        const status = queryData.data.status;
+      if (queryData.output) {
+        const status = queryData.output.task_status;
         console.log(`任务状态: ${status}`);
         
-        if (status === 'done') {
-          if (queryData.data.video_url) {
-            const videoUrl = queryData.data.video_url;
+        if (status === 'SUCCEEDED') {
+          const videoUrl = queryData.output.video_url || queryData.output.video_url_list?.[0] || queryData.output.videos?.[0]?.url;
+          if (videoUrl) {
             console.log('图生视频成功，开始下载视频...');
             
             try {
@@ -270,10 +171,10 @@ export async function POST(request: NextRequest) {
           } else {
             throw new Error('响应中未找到视频URL');
           }
-        } else if (status === 'failed') {
-          const message = queryData.data.message || '任务失败';
+        } else if (status === 'FAILED') {
+          const message = queryData.output.message || '任务失败';
           throw new Error(`图生视频失败: ${message}`);
-        } else if (status === 'in_queue' || status === 'generating') {
+        } else if (status === 'PENDING' || status === 'RUNNING') {
           console.log('任务仍在处理中，请稍候...');
           continue;
         } else {

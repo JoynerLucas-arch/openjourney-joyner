@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -23,28 +22,21 @@ import { ApiKeyDialog } from "@/components/api-key-dialog";
 
 export function SettingsDropdown() {
   const [imageAccessKey, setImageAccessKey] = useState("");
-  const [imageSecretKey, setImageSecretKey] = useState("");
   const [videoAccessKey, setVideoAccessKey] = useState("");
-  const [videoSecretKey, setVideoSecretKey] = useState("");
-  const [videoModel, setVideoModel] = useState("jimeng_t2v_v30_1080p");
+  const [videoModel, setVideoModel] = useState("wan2.6-t2v");
   const [darkMode, setDarkMode] = useState(false);
-  const [showCredentials, setShowCredentials] = useState(false);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
 
   useEffect(() => {
     // Function to load credentials from localStorage
     const loadCredentials = () => {
-      const savedImageAccessKey = localStorage.getItem("jimeng_image_access_key");
-      const savedImageSecretKey = localStorage.getItem("jimeng_image_secret_key");
-      const savedVideoAccessKey = localStorage.getItem("jimeng_video_access_key");
-      const savedVideoSecretKey = localStorage.getItem("jimeng_video_secret_key");
-      const savedVideoModel = localStorage.getItem("jimeng_video_model");
+      const savedImageAccessKey = localStorage.getItem("aliyun_image_api_key");
+      const savedVideoAccessKey = localStorage.getItem("aliyun_video_api_key");
+      const savedVideoModel = localStorage.getItem("aliyun_t2v_model");
       setImageAccessKey(savedImageAccessKey || "");
-      setImageSecretKey(savedImageSecretKey || "");
       setVideoAccessKey(savedVideoAccessKey || "");
-      setVideoSecretKey(savedVideoSecretKey || "");
-      setVideoModel(savedVideoModel || "jimeng_t2v_v30_1080p");
+      setVideoModel(savedVideoModel || "wan2.6-t2v");
     };
 
     // Load saved credentials from localStorage
@@ -95,29 +87,30 @@ export function SettingsDropdown() {
 
   const handleClearCredentials = () => {
     setImageAccessKey("");
-    setImageSecretKey("");
     setVideoAccessKey("");
-    setVideoSecretKey("");
+    localStorage.removeItem("aliyun_image_api_key");
+    localStorage.removeItem("aliyun_video_api_key");
+    localStorage.removeItem("aliyun_t2v_model");
     localStorage.removeItem("jimeng_image_access_key");
     localStorage.removeItem("jimeng_image_secret_key");
     localStorage.removeItem("jimeng_video_access_key");
     localStorage.removeItem("jimeng_video_secret_key");
     localStorage.removeItem("jimeng_video_model");
-    setVideoModel("jimeng_t2v_v30_1080p");
-    setSaveStatus("即梦AI凭证已清除");
+    setVideoModel("wan2.6-t2v");
+    setSaveStatus("阿里云百炼API Key已清除");
     setTimeout(() => setSaveStatus(null), 3000);
   };
 
   const handleVideoModelChange = (value: string) => {
     console.log(`视频模型已切换: ${value}`);
     setVideoModel(value);
-    localStorage.setItem("jimeng_video_model", value);
+    localStorage.setItem("aliyun_t2v_model", value);
     // Trigger a custom event to notify other components
     window.dispatchEvent(new CustomEvent('videoModelUpdated', { detail: { model: value } }));
   };
 
   const handleApiKeySaved = () => {
-    setSaveStatus("即梦AI凭证保存成功!");
+    setSaveStatus("阿里云百炼API Key保存成功!");
     setTimeout(() => setSaveStatus(null), 3000);
     // Trigger a custom event to notify other components
     window.dispatchEvent(new CustomEvent('apiKeyUpdated'));
@@ -135,7 +128,7 @@ export function SettingsDropdown() {
           {/* JiMeng AI Credentials Section */}
           <div className="space-y-2">
             <Label className="text-sm font-medium">
-              即梦AI凭证
+              阿里云百炼API Key
             </Label>
             <div className="space-y-2">
               <Button
@@ -152,19 +145,19 @@ export function SettingsDropdown() {
               <div className="text-xs text-muted-foreground space-y-1">
                 <div className="flex justify-between">
                   <span>图片生成:</span>
-                  <span className={imageAccessKey && imageSecretKey ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}>
-                    {imageAccessKey && imageSecretKey ? "已配置" : "未配置"}
+                  <span className={imageAccessKey ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}>
+                    {imageAccessKey ? "已配置" : "未配置"}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span>视频生成:</span>
-                  <span className={videoAccessKey && videoSecretKey ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}>
-                    {videoAccessKey && videoSecretKey ? "已配置" : "未配置"}
+                  <span className={videoAccessKey ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}>
+                    {videoAccessKey ? "已配置" : "未配置"}
                   </span>
                 </div>
               </div>
               
-              {(imageAccessKey || imageSecretKey || videoAccessKey || videoSecretKey) && (
+              {(imageAccessKey || videoAccessKey) && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -178,12 +171,12 @@ export function SettingsDropdown() {
             <p className="text-xs text-muted-foreground">
               从{" "}
               <a
-                href="https://console.volcengine.com/iam/keymanage/"
+                href="https://bailian.console.aliyun.com/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary hover:underline"
               >
-                火山引擎控制台
+                阿里云百炼控制台
               </a>
               {" "}获取您的API凭证
             </p>
@@ -206,11 +199,8 @@ export function SettingsDropdown() {
                 <SelectValue placeholder="选择视频模型" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="jimeng_t2v_v30_1080p">
-                  即梦视频 3.0
-                </SelectItem>
-                <SelectItem value="jimeng_ti2v_v30_pro">
-                  即梦视频 3.0 Pro
+                <SelectItem value="wan2.6-t2v">
+                  通义万相 视频 2.6
                 </SelectItem>
               </SelectContent>
             </Select>

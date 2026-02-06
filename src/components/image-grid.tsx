@@ -113,7 +113,7 @@ export function ImageGrid({ generation, onImageToVideo, onViewFullscreen, onDele
     }
   };
 
-  const handleDelete = async (imageData: { id?: string; url: string; imageBytes?: string; isSample?: boolean }, index: number) => {
+  const handleDelete = async (imageData: { id?: string; url: string; imageBytes?: string; isSample?: boolean }) => {
     // Skip sample images
     if (imageData.isSample) {
       console.log('Cannot delete sample images');

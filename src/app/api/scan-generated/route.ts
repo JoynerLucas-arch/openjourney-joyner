@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import fs from 'fs';
 import path from 'path';
 
@@ -11,7 +11,7 @@ interface GeneratedFile {
   prompt?: string;
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const generatedFiles: GeneratedFile[] = [];
     

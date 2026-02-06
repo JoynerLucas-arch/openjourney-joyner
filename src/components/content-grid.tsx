@@ -44,10 +44,19 @@ interface LoadingGeneration {
   sourceImage?: string;
 }
 
+interface ScannedFile {
+  id: string;
+  type: 'image' | 'video';
+  url: string;
+  filename: string;
+  timestamp: string | Date;
+  prompt?: string;
+}
+
 type Generation = ImageGeneration | VideoGeneration | LoadingGeneration;
 
 // Helper function to convert scanned files to generation format
-const convertFilesToGenerations = (files: any[]): Generation[] => {
+const convertFilesToGenerations = (files: ScannedFile[]): Generation[] => {
   const generationMap = new Map<string, Generation>();
   
   files.forEach((file) => {
@@ -271,11 +280,8 @@ export function ContentGrid({
   const handleNewGeneration = async (type: "image" | "video", prompt: string) => {
     // Get user's credentials from localStorage based on generation type
     const accessKey = type === "image" 
-      ? localStorage.getItem("jimeng_image_access_key")
-      : localStorage.getItem("jimeng_video_access_key");
-    const secretKey = type === "image" 
-      ? localStorage.getItem("jimeng_image_secret_key")
-      : localStorage.getItem("jimeng_video_secret_key");
+      ? localStorage.getItem("aliyun_image_api_key")
+      : localStorage.getItem("aliyun_video_api_key");
     
     const loadingGeneration: LoadingGeneration = {
       id: `loading-${Date.now()}`,
@@ -296,7 +302,7 @@ export function ContentGrid({
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ prompt, accessKey, secretKey }),
+          body: JSON.stringify({ prompt, accessKey }),
         });
 
         const data = await response.json();
@@ -323,14 +329,14 @@ export function ContentGrid({
       } else {
         // Call JiMeng AI API for text-to-video
         // Get selected video model from localStorage
-        const selectedModel = localStorage.getItem("jimeng_video_model") || "jimeng_t2v_v30_1080p";
+        const selectedModel = localStorage.getItem("aliyun_t2v_model") || "wan2.6-t2v";
         
         const response = await fetch('/api/generate-videos', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ prompt, accessKey, secretKey, model: selectedModel }),
+          body: JSON.stringify({ prompt, accessKey, model: selectedModel }),
         });
 
         const data = await response.json();
@@ -371,10 +377,8 @@ export function ContentGrid({
 
   const handleImageToVideo = async (imageUrl: string, imageBytes: string, prompt: string) => {
     // Get user's credentials from localStorage for video generation
-    const accessKey = localStorage.getItem("jimeng_video_access_key");
-    const secretKey = localStorage.getItem("jimeng_video_secret_key");
-    // Get selected video model from localStorage
-    const selectedModel = localStorage.getItem("jimeng_video_model") || "jimeng_i2v_first_v30_1080";
+    const accessKey = localStorage.getItem("aliyun_video_api_key");
+    const selectedModel = "wan2.6-i2v";
     
     const loadingGeneration: LoadingGeneration = {
       id: `video-loading-${Date.now()}`,
@@ -398,7 +402,6 @@ export function ContentGrid({
           prompt: `${prompt} - animated video`,
           imageBytes,
           accessKey,
-          secretKey,
           model: selectedModel
         }),
       });
@@ -583,7 +586,6 @@ export function ContentGrid({
         onClose={() => setFocusedView(prev => ({ ...prev, isOpen: false }))}
         mediaItems={focusedView.mediaItems}
         initialIndex={focusedView.initialIndex}
-        onImageToVideo={handleImageToVideo}
       />
     </>
   );

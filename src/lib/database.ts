@@ -33,7 +33,7 @@ export async function getConnection() {
 }
 
 // 执行查询的辅助函数
-export async function executeQuery(query: string, params: any[] = []) {
+export async function executeQuery(query: string, params: ReadonlyArray<unknown> = []) {
   const connection = await getConnection();
   try {
     const [results] = await connection.execute(query, params);
@@ -47,12 +47,12 @@ export async function executeQuery(query: string, params: any[] = []) {
 }
 
 // 执行事务的辅助函数
-export async function executeTransaction(queries: Array<{query: string, params: any[]}>) {
+export async function executeTransaction(queries: Array<{query: string, params: ReadonlyArray<unknown>}>) {
   const connection = await getConnection();
   try {
     await connection.beginTransaction();
     
-    const results = [];
+    const results: unknown[] = [];
     for (const {query, params} of queries) {
       const [result] = await connection.execute(query, params);
       results.push(result);

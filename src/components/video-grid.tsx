@@ -124,7 +124,7 @@ export function VideoGrid({ generation, onViewFullscreen, onDelete }: VideoGridP
     }
   };
 
-  const handleDelete = async (videoData: { id?: string; url: string; isSample?: boolean }, index: number) => {
+  const handleDelete = async (videoData: { id?: string; url: string; isSample?: boolean }) => {
     // Skip sample videos
     if (videoData.isSample) {
       console.log('Cannot delete sample videos');

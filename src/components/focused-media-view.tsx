@@ -22,15 +22,13 @@ interface FocusedMediaViewProps {
   onClose: () => void;
   mediaItems: MediaItem[];
   initialIndex: number;
-  onImageToVideo?: (imageUrl: string, imageBytes: string, prompt: string) => void;
 }
 
 export function FocusedMediaView({
   isOpen,
   onClose,
   mediaItems,
-  initialIndex,
-  onImageToVideo
+  initialIndex
 }: FocusedMediaViewProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const filmStripRef = useRef<HTMLDivElement>(null);
@@ -188,16 +186,6 @@ export function FocusedMediaView({
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };
-
-  const formatTimestamp = (date: Date) => {
-    return new Intl.DateTimeFormat('zh-CN', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    }).format(date);
   };
 
   if (!isOpen || !currentItem) return null;
